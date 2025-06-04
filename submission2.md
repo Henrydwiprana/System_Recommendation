@@ -49,7 +49,7 @@ Untuk mencapai tujuan tersebut, dua pendekatan digabungkan secara strategis:
 ## Data Understanding
 Dataset yang digunakan berasal dari **Book-Crossing Dataset** oleh GroupLens Research.
 
-**Sumber Dataset:** https://www.kaggle.com/code/fahadmehfoooz/book-recommendation-system
+**Sumber Dataset:** https://www.kaggle.com/datasets/arashnic/book-recommendation-dataset
 
 Dataset ini terdiri dari tiga file utama:
 - **Books.csv**: berisi informasi tentang buku.
@@ -103,48 +103,69 @@ Distribusi rating buku dianalisis untuk memahami persebaran skor yang diberikan 
 Pada tahap ini, dilakukan beberapa langkah penting untuk menyiapkan data sebelum digunakan dalam model rekomendasi. Setiap teknik yang digunakan memiliki tujuan untuk meningkatkan kualitas data dan akurasi sistem rekomendasi.
 
 ### 1. Penyaringan Pengguna dan Buku
-- **Tujuan:** Menghindari cold start dan sparsity (kekosongan data) dengan hanya menyertakan pengguna dan buku yang memiliki jumlah interaksi memadai.
-
+- Tujuan: Menghindari cold start (pengguna atau buku baru tanpa riwayat interaksi yang cukup) dan sparsity (kekosongan data) dengan hanya menyertakan pengguna dan buku yang memiliki jumlah interaksi memadai. Dalam proyek ini, hanya pengguna dengan lebih dari 10 interaksi dan buku dengan lebih dari 50 interaksi yang dipertahankan. Ini membantu memastikan bahwa model dilatih pada data yang memiliki pola perilaku yang cukup untuk dipelajari.
+  
 ### 2. Merge Metadata Buku
-- **Tujuan:** Menggabungkan informasi judul buku agar dapat digunakan pada content-based filtering.
+- Tujuan: Menggabungkan informasi judul buku dari Books.csv ke dalam dataset Ratings.csv yang sudah difilter (filtered_ratings). Penggabungan ini penting agar informasi judul buku dapat diakses dan digunakan untuk content-based filtering.
+  
 
-### 3. Representasi Vektor TF-IDF
-- **Tujuan:** Mengubah teks judul buku menjadi vektor numerik yang dapat dihitung kemiripannya.
+### 3. Pembersihan Data Duplikat dan Nilai Kosong pada Metadata Buku
+- Tujuan: Memastikan setiap buku memiliki representasi unik dan lengkap untuk proses TF-IDF. Sebelum membuat matriks TF-IDF, dilakukan penghapusan entri duplikat pada kombinasi ISBN dan judul buku, serta menghilangkan baris yang memiliki nilai kosong pada kolom judul. Ini dilakukan pada book_info_unique = filtered_ratings[['ISBN', 'Book-Title']].drop_duplicates().dropna(). Langkah ini krusial untuk mencegah bias dan kesalahan dalam perhitungan kemiripan konten akibat data yang tidak bersih.
 
-### 4. Cosine Similarity untuk Content-Based
-- **Tujuan:** Menghitung kemiripan antar buku berdasarkan representasi TF-IDF.
+### 4. Representasi Vektor TF-IDF
+- Tujuan: Mengubah teks judul buku menjadi vektor numerik yang dapat dihitung kemiripannya. Teknik TF-IDF Vectorizer digunakan untuk merepresentasikan setiap judul buku sebagai vektor, di mana setiap nilai dalam vektor mencerminkan seberapa penting sebuah kata dalam judul buku relatif terhadap seluruh koleksi judul buku. Stop words dalam bahasa Inggris juga dihilangkan untuk meningkatkan relevansi representasi.
+  
+### 5. Cosine Similarity untuk Content-Based
+- Tujuan: Menghitung kemiripan antar buku berdasarkan representasi TF-IDF. Cosine similarity dipilih karena efektif dalam mengukur sudut antara dua vektor, memberikan nilai kemiripan yang berkisar antara 0 (tidak mirip) hingga 1 (sangat mirip).
 
-### 5. Pivot Table untuk User-Item Matrix
-- **Tujuan:** Membuat matriks interaksi pengguna–item yang digunakan untuk collaborative filtering.
+### 6. Pivot Table untuk User-Item Matrix
+- Tujuan: Membuat matriks interaksi pengguna–item yang digunakan untuk collaborative filtering. Matriks ini memiliki User-ID sebagai indeks, ISBN sebagai kolom, dan Book-Rating sebagai nilai, yang memungkinkan sistem untuk melihat pola rating pengguna secara terstruktur.
 
-### 6. Normalisasi dan Similarity untuk Collaborative Filtering
-- **Tujuan:** Mengisi nilai kosong dengan 0 dan menghitung kesamaan antar item berdasarkan rating pengguna.
+### 7. Normalisasi dan Similarity untuk Collaborative Filtering
+- Tujuan: Mengisi nilai kosong dalam matriks interaksi pengguna-item dengan 0. Kemudian, cosine similarity dihitung antar item berdasarkan pola rating pengguna. Ini memungkinkan sistem untuk menemukan buku-buku yang cenderung diberi rating serupa oleh pengguna yang sama, bahkan jika mereka belum pernah memberi rating pada buku yang sama.
+
+### 8. Pembagian Dataset (Data Latih dan Data Uji)
+- Tujuan: Mempersiapkan data untuk evaluasi model. Dataset yang sudah difilter (filtered_ratings) dibagi menjadi data latih (train_df) dan data uji (test_df) dengan perbandingan 80:20 (frac=0.2). Data latih digunakan untuk membangun model (dalam hal ini, matriks kemiripan item untuk collaborative filtering), sementara data uji digunakan untuk memprediksi rating dan mengevaluasi performa model. Langkah ini penting untuk mengukur seberapa baik model dapat menggeneralisasi ke data yang belum pernah dilihat sebelumnya.
 
 Tahapan ini penting untuk memastikan bahwa model bekerja hanya dengan data yang relevan dan berkualitas tinggi.
 
 
 ## Modeling
-Pada tahap ini, dibangun sistem rekomendasi untuk menghasilkan Top-10 Recommendation dengan dua pendekatan yang berbeda, yaitu:
+Pada tahap ini, kami membangun sistem rekomendasi untuk menghasilkan Top-10 Rekomendasi dengan dua pendekatan utama: Content-Based Filtering dan Collaborative Filtering, yang kemudian kami gabungkan dalam model Hybrid.
 
 ### 1. Content-Based Filtering
-- Menggunakan TF-IDF untuk menghitung kemiripan antar buku berdasarkan judul.
-- Kemiripan dihitung dengan cosine similarity antar TF-IDF vektor.
+Pendekatan ini berfokus pada kemiripan atribut antar item. Kami menggunakan TF-IDF (Term Frequency-Inverse Document Frequency) untuk merepresentasikan judul buku sebagai vektor numerik. Kemudian, cosine similarity digunakan untuk menghitung kemiripan antar vektor judul buku tersebut.
 
+- Tujuan :
+  Merekomendasikan buku-buku yang memiliki kesamaan konten atau tema dengan buku-buku yang sebelumnya disukai atau diberi rating tinggi oleh pengguna. Ini efektif untuk mencari rekomendasi yang relevan secara topikal.
 
+ Output: Top-10 recommendation
+ 
 ### 2. Collaborative Filtering (Item-Based)
-- Menggunakan user-item rating matrix.
-- Menghitung cosine similarity antar item berdasarkan pola rating pengguna.
+Pendekatan ini berfokus pada kemiripan perilaku rating antar item. Kami membangun user-item rating matrix dan kemudian menghitung cosine similarity antar item berdasarkan pola rating pengguna.
 
+- Tujuan:
+  Merekomendasikan buku-buku yang sering diberi rating tinggi oleh pengguna lain yang memiliki selera serupa, atau buku yang sering dibaca/diberi rating bersamaan dengan buku yang disukai pengguna. Ini sangat berguna untuk menemukan "permata tersembunyi" atau buku populer dalam komunitas selera pengguna.
 
+ Output: Top-10 recommendation
+ 
 ### 3. Hybrid Recommendation
-- Menggabungkan skor dari content-based dan collaborative filtering.
+Pendekatan ini menggabungkan skor dari content-based dan collaborative filtering menggunakan formula bobot:
 - Formula gabungan: `combined_scores = alpha * content_score + (1 - alpha) * collaborative_score`
   alpha = 0.5
-- Output: Top-10 recommendation yang lebih akurat dan relevan.
+- Tujuan:
+  Mengatasi kelemahan masing-masing metode tunggal (misalnya, Content-Based yang mungkin terlalu sempit atau Collaborative Filtering yang rentan cold start dan sparsity) untuk menghasilkan rekomendasi yang lebih akurat, personal, dan robust. Model hybrid ini dirancang untuk memberikan pengalaman rekomendasi yang optimal dengan memanfaatkan kekuatan kedua pendekatan.
+
+  Output: Top-10 recommendation .
 
 ## Evaluation
-Metrik ini digunakan karena sistem rekomendasi berbasis rating perlu mengukur seberapa akurat prediksi sistem terhadap rating aktual yang diberikan oleh pengguna. RMSE cocok digunakan karena memberikan penalti 
-yang lebih besar pada prediksi yang jauh dari nilai sebenarnya, sehingga model dapat dioptimalkan untuk mengurangi kesalahan besar.
+Dalam proyek ini, digunakan dua jenis metrik evaluasi yang sesuai dengan karakteristik pendekatan sistem rekomendasi yang dibangun:
+
+1. Root Mean Squared Error (RMSE)
+   Digunakan untuk mengevaluasi performa model Collaborative Filtering, yang melakukan prediksi rating eksplisit dari pengguna terhadap buku.
+
+2. Precision@10 dan Recall@10
+   Digunakan untuk mengevaluasi performa model Hybrid, yang menghasilkan daftar rekomendasi Top-10 buku untuk setiap pengguna. Metrik ini lebih sesuai karena fokus model hybrid adalah memberikan rekomendasi, bukan memprediksi nilai rating.
 
 ### Hasil Evaluasi:
 - RMSE yang dihasilkan: 3.61
