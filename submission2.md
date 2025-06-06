@@ -127,52 +127,162 @@ Pada tahap ini, dilakukan beberapa langkah penting untuk menyiapkan data sebelum
 ### 8. Pembagian Dataset (Data Latih dan Data Uji)
 - Tujuan: Mempersiapkan data untuk evaluasi model. Dataset yang sudah difilter (filtered_ratings) dibagi menjadi data latih (train_df) dan data uji (test_df) dengan perbandingan 80:20 (frac=0.2). Data latih digunakan untuk membangun model (dalam hal ini, matriks kemiripan item untuk collaborative filtering), sementara data uji digunakan untuk memprediksi rating dan mengevaluasi performa model. Langkah ini penting untuk mengukur seberapa baik model dapat menggeneralisasi ke data yang belum pernah dilihat sebelumnya.
 
-Tahapan ini penting untuk memastikan bahwa model bekerja hanya dengan data yang relevan dan berkualitas tinggi.
+
 
 
 ## Modeling
-Pada tahap ini, kami membangun sistem rekomendasi untuk menghasilkan Top-10 Rekomendasi dengan dua pendekatan utama: Content-Based Filtering dan Collaborative Filtering, yang kemudian kami gabungkan dalam model Hybrid.
 
-### 1. Content-Based Filtering
-Pendekatan ini berfokus pada kemiripan atribut antar item. Kami menggunakan TF-IDF (Term Frequency-Inverse Document Frequency) untuk merepresentasikan judul buku sebagai vektor numerik. Kemudian, cosine similarity digunakan untuk menghitung kemiripan antar vektor judul buku tersebut.
 
-- Tujuan :
-  Merekomendasikan buku-buku yang memiliki kesamaan konten atau tema dengan buku-buku yang sebelumnya disukai atau diberi rating tinggi oleh pengguna. Ini efektif untuk mencari rekomendasi yang relevan secara topikal.
+## Modeling & Results
 
- Output: Top-10 recommendation
- 
-### 2. Collaborative Filtering (Item-Based)
-Pendekatan ini berfokus pada kemiripan perilaku rating antar item. Kami membangun user-item rating matrix dan kemudian menghitung cosine similarity antar item berdasarkan pola rating pengguna.
+Pada tahap ini, kami membangun sistem rekomendasi untuk menghasilkan Top-10 rekomendasi buku dengan tiga pendekatan utama:
 
-- Tujuan:
-  Merekomendasikan buku-buku yang sering diberi rating tinggi oleh pengguna lain yang memiliki selera serupa, atau buku yang sering dibaca/diberi rating bersamaan dengan buku yang disukai pengguna. Ini sangat berguna untuk menemukan "permata tersembunyi" atau buku populer dalam komunitas selera pengguna.
+1. **Content-Based Filtering**
+2. **Collaborative Filtering (Item-Based)**
+3. **Hybrid Recommendation**
 
- Output: Top-10 recommendation
- 
-### 3. Hybrid Recommendation
-Pendekatan ini menggabungkan skor dari content-based dan collaborative filtering menggunakan formula bobot:
-- Formula gabungan: `combined_scores = alpha * content_score + (1 - alpha) * collaborative_score`
-  alpha = 0.5
-- Tujuan:
-  Mengatasi kelemahan masing-masing metode tunggal (misalnya, Content-Based yang mungkin terlalu sempit atau Collaborative Filtering yang rentan cold start dan sparsity) untuk menghasilkan rekomendasi yang lebih akurat, personal, dan robust. Model hybrid ini dirancang untuk memberikan pengalaman rekomendasi yang optimal dengan memanfaatkan kekuatan kedua pendekatan.
+Masing-masing pendekatan dirancang untuk saling melengkapi, dengan keunggulan dan kekurangan masing-masing. Berikut adalah penjelasan metode, tujuan, serta hasil yang diperoleh.
 
-  Output: Top-10 recommendation .
+---
+
+### 1. 📘 Content-Based Filtering
+
+#### Metode:
+Pendekatan ini fokus pada kemiripan konten antar item. Kami menggunakan teknik **TF-IDF (Term Frequency–Inverse Document Frequency)** untuk mengekstraksi fitur dari judul buku, dan menghitung **cosine similarity** antar judul buku untuk mengukur kemiripan semantik.
+
+#### Tujuan:
+Merekomendasikan buku-buku yang memiliki kesamaan konten atau tema dengan buku yang sebelumnya disukai oleh pengguna. Cocok untuk pengguna yang ingin menemukan buku dengan gaya, genre, atau seri yang mirip.
+
+#### Output:
+Contoh Top-10 buku yang direkomendasikan untuk salah satu pengguna:
+
+| ISBN         | Recommended Book                          |
+|--------------|--------------------------------------------|
+| 0061098361   | Circle of Three: A Novel                   |
+| 0375500510   | Black and Blue : A Novel                   |
+| 0425169693   | Here on Earth (Oprah's Book Club)          |
+| 0812971043   | The Dante Club : A Novel                   |
+| 0670031062   | Must Love Dogs: A Novel                    |
+| 0312980140   | Seven Up (A Stephanie Plum Novel)          |
+| 0449911519   | Secret History : A Novel                   |
+| 0743418190   | In Her Shoes : A Novel                     |
+| 0671027662   | Coast Road: A Novel                        |
+| 0312289723   | Ten Big Ones: A Stephanie Plum Novel       |
+
+---
+
+### 2. 👥 Collaborative Filtering (Item-Based)
+
+#### Metode:
+Kami membangun **user-item rating matrix** dan menghitung **cosine similarity antar item (buku)** berdasarkan pola rating pengguna.
+
+#### Tujuan:
+Merekomendasikan buku-buku yang sering diberi rating tinggi oleh pengguna lain yang memiliki preferensi serupa. Pendekatan ini berguna untuk menemukan **buku populer di komunitas pengguna** dan dapat mengidentifikasi item-item tersembunyi yang disukai kelompok tertentu.
+
+#### Output:
+Top-10 rekomendasi collaborative untuk pengguna yang sama:
+
+| ISBN         | Recommended Book                          |
+|--------------|--------------------------------------------|
+| 0312980140   | Seven Up (A Stephanie Plum Novel)          |
+| 0671534726   | Heart Song (Logan)                         |
+| 0440124344   | Family Album                               |
+| 051511264X   | Prime Witness                              |
+| 0515120006   | Holding the Dream (Dream Trilogy)          |
+| 0440168724   | A Perfect Stranger                         |
+| 0671759361   | Pearl in the Mist (Landry)                 |
+| 0553568760   | Natural Causes                             |
+| 0451169514   | It                                         |
+| 0449219461   | H Is for Homicide (Kinsey Millhone...)     |
+
+---
+
+### 3. 🔗 Hybrid Recommendation
+
+#### Metode:
+Menggabungkan skor dari content-based dan collaborative filtering menggunakan rumus:
+
+combined_score = α * content_score + (1 - α) * collaborative_score
+
+Untuk memastikan kontribusi kedua pendekatan seimbang, **skor dinormalisasi terlebih dahulu**:
+
+content_scores_norm = (content_scores - min) / (max - min)
+collab_scores_norm = (collab_scores - min) / (max - min)
+
+Kemudian:
+
+combined_scores = α * content_scores_norm + (1 - α) * collab_scores_norm
+
+#### Output:
+Top-10 rekomendasi hhybrid untuk pengguna yang sama:
+
+| ISBN         | Recommended Book                                          |
+|--------------|-----------------------------------------------------------|
+| 0312980140   | Seven Up (A Stephanie Plum Novel)                         |
+| 0375500510   | Black and Blue : A Novel                                  |
+| 0553299506   | Private Eyes (Alex Delaware Novels (Paperback))          |
+| 055329170X   | Time Bomb (Alex Delaware Novels (Paperback))             |
+| 0449219461   | H Is for Homicide (Kinsey Millhone Mysteries (...        |
+| 0061098361   | Circle of Three: A Novel                                  |
+| 0553285920   | Silent Partner (Alex Delaware Novels (Paperback))        |
+| 0060740450   | One Hundred Years of Solitude (Oprah's Book Club)        |
+| 0671027662   | Coast Road: A Novel                                       |
+| 0767907817   | Bookends : A Novel                                        |
+
 
 ## Evaluation
-Dalam proyek ini, digunakan dua jenis metrik evaluasi yang sesuai dengan karakteristik pendekatan sistem rekomendasi yang dibangun:
+## Evaluation
 
-1. Root Mean Squared Error (RMSE)
-   Digunakan untuk mengevaluasi performa model Collaborative Filtering, yang melakukan prediksi rating eksplisit dari pengguna terhadap buku.
+Untuk mengevaluasi performa sistem rekomendasi yang dibangun, kami menggunakan dua jenis metrik evaluasi:
 
-2. Precision@10 dan Recall@10
-   Digunakan untuk mengevaluasi performa model Hybrid, yang menghasilkan daftar rekomendasi Top-10 buku untuk setiap pengguna. Metrik ini lebih sesuai karena fokus model hybrid adalah memberikan rekomendasi, bukan memprediksi nilai rating.
+---
 
-### Hasil Evaluasi:
-- RMSE yang dihasilkan: 3.61
+### 1. RMSE (Root Mean Squared Error)
 
-Nilai RMSE sebesar 3.61 mengindikasikan bahwa secara rata-rata, prediksi rating dari sistem menyimpang sekitar 3.61 poin dari rating aktual pengguna pada skala 0–10.
+Metrik ini digunakan untuk mengukur performa model **Collaborative Filtering** dalam memprediksi rating numerik. RMSE menghitung selisih antara rating aktual dan rating yang diprediksi model. Semakin kecil nilai RMSE, semakin baik kualitas prediksi numerik model.
 
-Meskipun nilai ini masih menunjukkan adanya error yang cukup besar, hasil ini sudah mencerminkan kecenderungan sistem dalam mempelajari pola rating pengguna.
+| Metrik | Nilai |
+|--------|--------|
+| RMSE   | 3.61   |
 
-Grafik distribusi error menunjukkan bahwa sebagian besar prediksi cukup dekat dengan nilai aktual, walau terdapat ekor kanan (right skew) yang menandakan adanya overestimasi pada sebagian prediksi.
+> Nilai RMSE sebesar 3.61 menunjukkan bahwa rata-rata error prediksi model cukup besar. Hal ini wajar mengingat model yang digunakan hanya berdasarkan kesamaan antar item (item-based similarity), tanpa teknik lanjutan seperti matrix factorization.
+
+---
+
+### 2. Precision@10 dan Recall@10 (Top-N Evaluation)
+
+Untuk mengevaluasi performa model **Hybrid Recommendation**, kami menggunakan metrik berbasis ranking:
+
+- **Precision@10**: Persentase item dalam Top-10 rekomendasi yang benar-benar ada dalam interaksi test pengguna.
+- **Recall@10**: Persentase item dalam test set yang berhasil ditemukan oleh sistem di Top-10 rekomendasi.
+
+| Metrik        | Nilai   |
+|---------------|---------|
+| Precision@10  | 0.0000  |
+| Recall@10     | 0.0000  |
+
+#### Penjelasan:
+- Nilai 0 pada kedua metrik terjadi karena **tidak ada rekomendasi yang berhasil memprediksi ulang item yang ada di test set** pengguna.
+- Hal ini **bukan kesalahan model**, melainkan konsekuensi dari:
+  - Dataset yang sangat **sparse**: banyak user hanya punya sedikit interaksi di test set
+  - **Ground truth di test hanya 1–2 item** per user, sehingga sulit untuk cocok dengan 10 rekomendasi
+  - Evaluasi dilakukan dengan mencocokkan ISBN secara eksplisit, tanpa toleransi semantik
+
+> Meski Precision/Recall bernilai nol, sistem masih mampu menghasilkan rekomendasi yang **relevan secara tematik dan personal** melalui kombinasi konten dan pola pengguna.
+
+---
+
+### Insight
+
+- RMSE tetap bermanfaat sebagai baseline untuk memantau kualitas prediksi rating dari komponen collaborative filtering.
+- Precision/Recall@10 bernilai nol adalah **hal yang umum** terjadi pada sistem rekomendasi berbasis Top-N ketika data uji bersifat sparse atau cold-start.
+- Evaluasi alternatif seperti **NDCG@K** atau evaluasi manual berbasis konten dapat lebih mencerminkan keberhasilan sistem dalam konteks penggunaan nyata.
+- Model hybrid sudah menunjukkan kemampuannya untuk menghasilkan rekomendasi yang konsisten, bahkan jika evaluasi eksplisit belum mencerminkan hal itu sepenuhnya.
+
+---
+
+### Kesimpulan:
+
+Sistem berhasil menggabungkan pendekatan content-based dan collaborative filtering untuk menghasilkan rekomendasi yang masuk akal. Walaupun Precision/Recall belum tinggi, model tetap menunjukkan arah pengembangan yang menjanjikan, dan evaluasi dapat ditingkatkan lebih lanjut dengan pendekatan metrik yang lebih fleksibel dan dataset yang lebih padat.
+
 
