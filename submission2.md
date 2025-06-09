@@ -110,10 +110,10 @@ Pada tahap ini, dilakukan beberapa langkah penting untuk menyiapkan data sebelum
   
 
 ### 3. Pembersihan Data Duplikat dan Nilai Kosong pada Metadata Buku
-- Tujuan: Memastikan setiap buku memiliki representasi unik dan lengkap untuk proses TF-IDF. Sebelum membuat matriks TF-IDF, dilakukan penghapusan entri duplikat pada kombinasi ISBN dan judul buku, serta menghilangkan baris yang memiliki nilai kosong pada kolom judul. Ini dilakukan pada book_info_unique = filtered_ratings[['ISBN', 'Book-Title']].drop_duplicates().dropna(). Langkah ini krusial untuk mencegah bias dan kesalahan dalam perhitungan kemiripan konten akibat data yang tidak bersih.
+- Tujuan: Memastikan setiap buku memiliki representasi unik dan lengkap sebelum digunakan dalam proses TF-IDF. Untuk itu, data buku dari books terlebih dahulu difilter hanya untuk ISBN populer menggunakan popular_isbns, kemudian dipilih kolom ISBN dan Book-Title. Dari hasil tersebut, dilakukan penghapusan entri duplikat dan nilai kosong menggunakan drop_duplicates() dan dropna(). Proses ini menghasilkan variabel book_info_unique. Langkah ini penting untuk mencegah bias dan kesalahan dalam perhitungan kemiripan konten akibat data yang tidak bersih.
 
 ### 4. Representasi Vektor TF-IDF
-- Tujuan: Mengubah teks judul buku menjadi vektor numerik yang dapat dihitung kemiripannya. Teknik TF-IDF Vectorizer digunakan untuk merepresentasikan setiap judul buku sebagai vektor, di mana setiap nilai dalam vektor mencerminkan seberapa penting sebuah kata dalam judul buku relatif terhadap seluruh koleksi judul buku. Stop words dalam bahasa Inggris juga dihilangkan untuk meningkatkan relevansi representasi.
+- Tujuan:  Mengubah data teks (judul buku) menjadi representasi numerik agar bisa digunakan dalam perhitungan kemiripan antar item (buku). Representasi ini penting untuk memungkinkan sistem rekomendasi berbasis konten (content-based) mengenali kesamaan antar buku dari segi kata atau istilah yang digunakan dalam judul..
   
 ### 5. Cosine Similarity untuk Content-Based
 - Tujuan: Menghitung kemiripan antar buku berdasarkan representasi TF-IDF. Cosine similarity dipilih karena efektif dalam mengukur sudut antara dua vektor, memberikan nilai kemiripan yang berkisar antara 0 (tidak mirip) hingga 1 (sangat mirip).
@@ -128,12 +128,7 @@ Pada tahap ini, dilakukan beberapa langkah penting untuk menyiapkan data sebelum
 - Tujuan: Mempersiapkan data untuk evaluasi model. Dataset yang sudah difilter (filtered_ratings) dibagi menjadi data latih (train_df) dan data uji (test_df) dengan perbandingan 80:20 (frac=0.2). Data latih digunakan untuk membangun model (dalam hal ini, matriks kemiripan item untuk collaborative filtering), sementara data uji digunakan untuk memprediksi rating dan mengevaluasi performa model. Langkah ini penting untuk mengukur seberapa baik model dapat menggeneralisasi ke data yang belum pernah dilihat sebelumnya.
 
 
-
-
 ## Modeling
-
-
-## Modeling & Results
 
 Pada tahap ini, kami membangun sistem rekomendasi untuk menghasilkan Top-10 rekomendasi buku dengan tiga pendekatan utama:
 
@@ -148,7 +143,7 @@ Masing-masing pendekatan dirancang untuk saling melengkapi, dengan keunggulan da
 ### 1. 📘 Content-Based Filtering
 
 #### Metode:
-Pendekatan ini fokus pada kemiripan konten antar item. Kami menggunakan teknik **TF-IDF (Term Frequency–Inverse Document Frequency)** untuk mengekstraksi fitur dari judul buku, dan menghitung **cosine similarity** antar judul buku untuk mengukur kemiripan semantik.
+Pendekatan ini menggunakan kemiripan antar item (buku) berdasarkan kontennya, khususnya judul buku. Representasi judul buku telah diekstraksi pada tahap Data Preparation menggunakan teknik TF-IDF dan diukur kemiripannya menggunakan cosine similarity. Sistem merekomendasikan buku-buku yang kontennya mirip dengan buku-buku yang sebelumnya disukai oleh pengguna.
 
 #### Tujuan:
 Merekomendasikan buku-buku yang memiliki kesamaan konten atau tema dengan buku yang sebelumnya disukai oleh pengguna. Cocok untuk pengguna yang ingin menemukan buku dengan gaya, genre, atau seri yang mirip.
@@ -230,7 +225,7 @@ Top-10 rekomendasi hhybrid untuk pengguna yang sama:
 | 0767907817   | Bookends : A Novel                                        |
 
 
-## Evaluation
+
 ## Evaluation
 
 Untuk mengevaluasi performa sistem rekomendasi yang dibangun, kami menggunakan dua jenis metrik evaluasi:
